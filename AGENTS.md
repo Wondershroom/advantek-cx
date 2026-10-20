@@ -117,3 +117,28 @@ gh pr create --base main --head dev --title "<type>: <summary>" --body "..."
 - When the user says "create a PR" without further context, assume `dev → main`.
 
 ---
+
+## 5. Cloud Agent environment
+
+Cloud Agents boot with local services already started. Use `http://localhost:3000` for the app. Opening `127.0.0.1` serves pages, but the Next.js dev client does not finish connecting there.
+
+| Service | Address |
+| --- | --- |
+| Next.js (`pnpm dev`) | http://localhost:3000 |
+| PostgreSQL 17 + pgvector | `127.0.0.1:5432`, database `nextcrm` |
+| MinIO | http://127.0.0.1:9000, bucket `nextcrm` |
+| Inngest dev server | http://127.0.0.1:8288 |
+
+`.env` and `.env.local` are generated on install and are gitignored. Database and MinIO credentials live there. The seeded admin is `admin@nextcrm.local`.
+
+Login is email OTP. In development the code is captured by Better Auth test utils:
+
+```bash
+curl -s "http://localhost:3000/api/auth/test-otp?email=admin%40nextcrm.local"
+```
+
+Sync the database with `pnpm exec prisma db push`, then `pnpm exec prisma db seed`. `prisma migrate deploy` cannot build a fresh database: `0_init` still creates the legacy `Invoices` table, and `20260415164939_invoices_module` creates the current table with the same name.
+
+Boot logs are written to `/tmp/cursor/start-user/start-user.log`.
+
+---
